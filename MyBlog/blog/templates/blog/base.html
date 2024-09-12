@@ -15,6 +15,7 @@
         <h2>Welcome</h2>
         <p>Enjoy our exciting news.</p>
         <p>So far, there are total of {% total_posts %} posts on this blog</p>
+        <p><a href="{% url "blog:post_feed" %}">Please Subscribe here for latest update</a></p>
         <h3>Check out our Latest posts here</h3>
         {% show_latest_posts 3 %}
         <p>Most commented posts</p>

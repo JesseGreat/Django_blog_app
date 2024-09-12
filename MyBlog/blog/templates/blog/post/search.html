@@ -1,0 +1,42 @@
+{% extends "blog/base.html" %}
+
+{% load blog_tags %}
+
+{% block tittle %}
+Search
+{% endblock %}
+
+{% block content %}
+    {% if query %}
+        <!-- Display the search results header if a query was provided -->
+        <h1>Posts containing "{{ query }}"</h1>
+        <h3>
+            <!-- Display the total number of results found -->
+            {% with results.count as total_results %}
+                Found {{ total_results }} result{{ total_results|pluralize }}
+            {% endwith %}
+        </h3>
+
+        <!-- Loop through each result and display it -->
+        {% for post in results %}
+            <h4>
+                <a href="{{ post.get_absolute_url }}">{{ post.tittle }}</a>
+            </h4>
+            {{ post.body|markdown|truncatewords_html:12 }}
+        {% empty %}
+            <!-- Display a message if no results were found -->
+            <p>There are no results for your query.</p>
+        {% endfor %}
+
+        <!-- Link to perform a new search -->
+        <p><a href="{% url 'blog:post_search' %}">Search again</a></p>
+
+    {% else %}
+        <!-- Display the search form if no query was provided -->
+        <h1>Search for posts</h1>
+        <form method="get">
+            {{ form.as_p }}
+            <input type="submit" value="Search">
+        </form>
+    {% endif %}
+{% endblock %}

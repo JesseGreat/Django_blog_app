@@ -4,9 +4,10 @@ from .models import Post
 from django.core.mail import send_mail
 from django.views.decorators.http import require_POST
 # from django.views.generic import ListView
-from .forms import EmailPostForm, CommentForm
+from .forms import EmailPostForm, CommentForm, SearchForm
 from taggit.models import Tag #This is use to categorize post of the same or similar contents
 from django.db.models import Count
+from django.contrib.postgres.search import SearchVector #implenting the search method, where user can actually search for what they are looking for on the blog
 
 
 """
@@ -126,6 +127,38 @@ def post_comment(request, post_id):
         comment.post = post # save the comment to the database
         comment.save()
         return render(request, 'blog/post/comment.html',{'post':post, 'form':form, 'comment':comment})
+
+def post_search(request):
+    # Initialize the search form and default variables
+    form = SearchForm()
+    query = None
+    results = []
+
+    # Check if 'query' is in the GET parameters of the request
+    if 'query' in request.GET:
+        # Populate the form with GET parameters
+        form = SearchForm(request.GET)
+        
+        # Validate the form data
+        if form.is_valid():
+            # Retrieve the search query from the form data
+            query = form.cleaned_data['query']
+            
+            # Perform the search by annotating the 'Post.published' queryset
+            # with a search vector that includes 'title' and 'body'
+            results = (
+                Post.published
+                .annotate(search=SearchVector('tittle', 'body'),)
+                .filter(search=query)
+            )
+
+    # Render the search results page with the form, query, and results
+    return render(
+        request,
+        'blog/post/search.html',
+        {'form': form, 'query': query, 'results': results}
+    )
+
             
         
     
