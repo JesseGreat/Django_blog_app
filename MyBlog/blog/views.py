@@ -7,7 +7,7 @@ from django.views.decorators.http import require_POST
 from .forms import EmailPostForm, CommentForm, SearchForm
 from taggit.models import Tag #This is use to categorize post of the same or similar contents
 from django.db.models import Count
-from django.contrib.postgres.search import SearchVector #implenting the search method, where user can actually search for what they are looking for on the blog
+from django.contrib.postgres.search import (SearchVector, SearchQuery, SearchRank) #implenting the search method, where user can actually search for what they are looking for on the blog
 
 
 """
@@ -143,13 +143,14 @@ def post_search(request):
         if form.is_valid():
             # Retrieve the search query from the form data
             query = form.cleaned_data['query']
+            search_vector = SearchVector('tittle', weight='A')+ SearchVector('body', weight='B')
+            search_query = SearchQuery(query,  config='spanish')
             
             # Perform the search by annotating the 'Post.published' queryset
             # with a search vector that includes 'title' and 'body'
             results = (
                 Post.published
-                .annotate(search=SearchVector('tittle', 'body'),)
-                .filter(search=query)
+                .annotate(search=search_vector,rank=SearchRank(search_vector, search_query),).filter(rank__gte=0.3).order_by('-rank')
             )
 
     # Render the search results page with the form, query, and results
